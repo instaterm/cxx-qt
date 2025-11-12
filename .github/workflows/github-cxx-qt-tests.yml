@@ -72,7 +72,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup toolchain
         run: |
-          cargo install grcov
+          cargo install --locked --version 0.8.20 grcov
           rustup component add llvm-tools
       - name: build
         env:
@@ -116,13 +116,15 @@ jobs:
             ~/.cargo/bin/sccache
             ~/.cargo/bin/mdbook
             ~/.cargo/bin/mdbook-linkcheck
-          key: ubuntu-24.04_sccache-0.7.6_mdbook-0.4.36_mdbook-linkcheck-0.7.7
+          key: ubuntu-24.04_sccache-0.9.1-patched_mdbook-0.4.36_mdbook-linkcheck-0.7.7
       - name: "Build Rust tools"
         if: steps.rust-tools-cache.outputs.cache-hit != 'true'
         # Do not build with storage backends enabled, we only need local
+        # cargo install --locked --no-default-features --version 0.9.1 sccache
         run: |
-          cargo install --no-default-features sccache
-          cargo install mdbook mdbook-linkcheck
+          cargo install --locked --no-default-features --git=https://github.com/ahayzen-kdab/sccache --branch=2092-ignore-notfound-errors sccache
+          cargo install --locked --version 0.4.36 mdbook 
+          cargo install --locked --version 0.7.7 mdbook-linkcheck
       # We want our compiler cache to always update to the newest state.
       # The best way for us to achieve this is to **always** update the cache after every landed commit.
       # That way it will closely follow our development.
@@ -251,7 +253,7 @@ jobs:
           - name: Ubuntu 24.04 (gcc) Qt6
             os: ubuntu-24.04
             qt_version: 6
-            aqt_version: '6.9.0'
+            aqt_version: '6.9.3'
             aqt_arch: 'linux_gcc_64'
             aqt_host: 'linux'
             cores: 4
@@ -294,10 +296,10 @@ jobs:
           - name: macOS 14 (clang) Qt6
             os: macos-14
             qt_version: 6
-            aqt_version: '6.9.0'
+            aqt_version: '6.9.3'
             aqt_arch: 'clang_64'
             aqt_host: 'mac'
-            dyld_framework_path: /Users/runner/work/cxx-qt/Qt/6.9.0/macos/lib
+            dyld_framework_path: /Users/runner/work/cxx-qt/Qt/6.9.3/macos/lib
             # https://doc.qt.io/qt-6.7/macos.html#target-platforms
             macosx_deployment_target: '13.0'
             cores: 3
@@ -352,7 +354,7 @@ jobs:
           - name: Windows 2022 (MSVC2022) Qt6 Debug
             os: windows-2022
             qt_version: 6
-            aqt_version: '6.9.0'
+            aqt_version: '6.9.3'
             aqt_arch: 'win64_msvc2022_64'
             aqt_host: 'windows'
             cores: 4
@@ -395,13 +397,15 @@ jobs:
           ${{ matrix.cargo_dir }}/bin/sccache${{ matrix.exe_suffix }}
           ${{ matrix.cargo_dir }}/bin/mdbook${{ matrix.exe_suffix }}
           ${{ matrix.cargo_dir }}/bin/mdbook-linkcheck${{ matrix.exe_suffix }}
-        key: ${{ matrix.os }}_sccache-0.7.6_mdbook-0.4.36_mdbook-linkcheck-0.7.7
+        key: ${{ matrix.os }}_sccache-0.9.1-patched_mdbook-0.4.36_mdbook-linkcheck-0.7.7
     - name: "Build Rust tools"
       if: steps.rust-tools-cache.outputs.cache-hit != 'true'
       # Do not build with storage backends enabled, we only need local
+      # cargo install --locked --no-default-features --version 0.9.1 sccache
       run: |
-        cargo install --no-default-features sccache
-        cargo install mdbook mdbook-linkcheck
+        cargo install --locked --no-default-features --git=https://github.com/ahayzen-kdab/sccache --branch=2092-ignore-notfound-errors sccache
+        cargo install --locked --version 0.4.36 mdbook 
+        cargo install --locked --version 0.7.7 mdbook-linkcheck
 
     # We want our compiler cache to always update to the newest state.
     # The best way for us to achieve this is to **always** update the cache after every landed commit.

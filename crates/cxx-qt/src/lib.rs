@@ -17,7 +17,89 @@ mod connectionguard;
 pub mod signalhandler;
 mod threading;
 
+/// A procedural macro which generates a QObject for a struct inside a module.
+///
+/// # Example
+///
+/// ```rust
+/// #[cxx_qt::bridge(namespace = "cxx_qt::my_object")]
+/// mod qobject {
+///     extern "RustQt" {
+///         #[qobject]
+///         # // Note that we can't use properties as this confuses the linker on Windows
+///         type MyObject = super::MyObjectRust;
+///
+///         #[qinvokable]
+///         fn invokable(self: &MyObject, a: i32, b: i32) -> i32;
+///     }
+/// }
+///
+/// #[derive(Default)]
+/// pub struct MyObjectRust;
+///
+/// impl qobject::MyObject {
+///     fn invokable(&self, a: i32, b: i32) -> i32 {
+///         a + b
+///     }
+/// }
+///
+/// # // Note that we need a fake main for doc tests to build
+/// # fn main() {
+/// # }
+/// ```
 pub use cxx_qt_macro::bridge;
+
+/// A macro which describes that a struct should be made into a QObject.
+///
+/// It should not be used by itself and instead should be used inside a cxx_qt::bridge definition.
+///
+/// # Example
+///
+/// ```rust
+/// #[cxx_qt::bridge]
+/// mod my_object {
+///     extern "RustQt" {
+///         #[qobject]
+///         # // Note that we can't use properties as this confuses the linker on Windows
+///         type MyObject = super::MyObjectRust;
+///     }
+/// }
+///
+/// #[derive(Default)]
+/// pub struct MyObjectRust;
+///
+/// # // Note that we need a fake main for doc tests to build
+/// # fn main() {
+/// # }
+/// ```
+///
+/// You can also specify a custom base class by using `#[base = QStringListModel]`, you must then use CXX to add any includes needed.
+///
+/// # Example
+///
+/// ```rust
+/// #[cxx_qt::bridge]
+/// mod my_object {
+///     extern "RustQt" {
+///         #[qobject]
+///         #[base = QStringListModel]
+///         # // Note that we can't use properties as this confuses the linker on Windows
+///         type MyModel = super::MyModelRust;
+///     }
+///
+///     unsafe extern "C++" {
+///         include!(<QtCore/QStringListModel>);
+///         type QStringListModel;
+///     }
+/// }
+///
+/// #[derive(Default)]
+/// pub struct MyModelRust;
+///
+/// # // Note that we need a fake main for doc tests to build
+/// # fn main() {
+/// # }
+/// ```
 pub use cxx_qt_macro::qobject;
 
 pub use connection::{ConnectionType, QMetaObjectConnection};
@@ -118,7 +200,7 @@ pub trait Threading: Sized {
     fn threading_clone(cxx_qt_thread: &CxxQtThread<Self>) -> CxxQtThread<Self>;
 
     #[doc(hidden)]
-    fn threading_drop(cxx_qt_thread: &mut CxxQtThread<Self>);
+    fn threading_drop(cxx_qt_thread: core::pin::Pin<&mut CxxQtThread<Self>>);
 }
 
 /// Placeholder for upcasting objects, suppresses dead code warning
